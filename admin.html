@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOGUE &amp; CO. — Cổng Quản Trị Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f5f5f7; color: #111111; }
+    .font-serif-brand { font-family: 'Playfair Display', serif; }
+    .accent-red { color: #D70018; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Login Gate -->
+  <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-neutral-950">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-8 shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="font-serif-brand text-2xl font-bold tracking-widest">VOGUE <span class="accent-red">&amp;</span> CO.</div>
+        <p class="text-xs uppercase tracking-widest text-neutral-500 mt-1">Hệ thống Quản trị viên</p>
+      </div>
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1">Tài khoản</label>
+          <input id="admUser" value="admin" required class="w-full border border-neutral-300 rounded-lg px-3 py-2.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1">Mật khẩu</label>
+          <input id="admPass" type="password" value="123456" required class="w-full border border-neutral-300 rounded-lg px-3 py-2.5 text-sm" />
+        </div>
+        <div id="loginErr" class="text-xs text-red-600 hidden">Sai tài khoản hoặc mật khẩu! (Mặc định: admin / 123456)</div>
+        <button type="submit" class="w-full py-3 bg-black hover:bg-neutral-800 text-white text-sm font-semibold rounded-xl transition">
+          Đăng nhập Quản trị
+        </button>
+      </form>
+      <div class="mt-5 pt-4 border-t border-neutral-200 text-center text-xs text-neutral-500 space-y-2">
+        <div>Tài khoản demo: <strong class="text-black">admin</strong> / <strong class="text-black">123456</strong></div>
+        <a href="index.html" class="inline-block text-black underline underline-offset-4 hover:text-red-600">&larr; Quay lại trang Khách hàng</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin App Layout -->
+  <div id="adminApp" class="hidden min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-neutral-950 text-white flex flex-col shrink-0">
+      <div class="p-6 border-b border-neutral-800">
+        <div class="font-serif-brand text-xl font-bold tracking-widest">VOGUE <span class="accent-red">&amp;</span> CO.</div>
+        <div class="text-[11px] uppercase tracking-widest text-neutral-400 mt-1">Admin Dashboard</div>
+      </div>
+
+      <nav class="flex-1 p-4 space-y-1.5 text-sm">
+        <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition">
+          <span>📊</span> Tổng quan &amp; Doanh thu
+        </button>
+        <button onclick="switchTab('orders')" id="nav-orders" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition">
+          <span>📦</span> Quản lý Đơn hàng
+        </button>
+        <button onclick="switchTab('products')" id="nav-products" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition">
+          <span>👕</span> Sản phẩm &amp; Tồn kho
+        </button>
+        <button onclick="switchTab('reviews')" id="nav-reviews" class="nav-btn w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition">
+          <span>⭐</span> Đánh giá khách hàng
+        </button>
+      </nav>
+
+      <div class="p-4 border-t border-neutral-800 space-y-2 text-xs">
+        <a href="index.html" target="_blank" class="block w-full text-center py-2.5 rounded-lg bg-white text-black font-semibold hover:bg-neutral-200 transition">
+          Mở web Khách hàng ↗
+        </a>
+        <button onclick="resetDemoData()" class="block w-full text-center py-2 rounded-lg border border-neutral-700 text-neutral-300 hover:bg-neutral-800 transition">
+          Khôi phục dữ liệu mẫu
+        </button>
+        <button onclick="logout()" class="block w-full text-center py-2 text-neutral-400 hover:text-red-400">
+          Đăng xuất
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-5 sm:p-8 overflow-x-hidden">
+      <div class="max-w-6xl mx-auto">
+        <!-- Top Header -->
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div>
+            <h1 id="pageTitle" class="text-2xl font-bold">Tổng quan hệ thống</h1>
+            <p class="text-xs text-neutral-500 mt-1">Đồng bộ trực tiếp với giao diện khách hàng (<code>index.html</code>)</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="openAddProductModal()" class="px-4 py-2.5 bg-black text-white text-sm font-semibold rounded-xl hover:bg-neutral-800 transition">
+              + Thêm sản phẩm mới
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab: Dashboard -->
+        <section id="tab-dashboard" class="tab-section space-y-6">
+          <div id="kpiCards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
+              <h3 class="font-bold mb-4">Đơn hàng mới nhất</h3>
+              <div id="recentOrders" class="space-y-3 text-sm"></div>
+            </div>
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-neutral-200">
+              <h3 class="font-bold mb-4">Cảnh báo sắp hết hàng (&le; 5 sản phẩm)</h3>
+              <div id="lowStockList" class="space-y-3 text-sm"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tab: Orders -->
+        <section id="tab-orders" class="tab-section hidden space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-neutral-200">
+            <div class="flex flex-wrap gap-2" id="orderFilterBtns"></div>
+            <input id="orderSearch" oninput="renderOrdersTable()" placeholder="Tìm mã ORD hoặc tên khách..." class="text-sm border border-neutral-300 rounded-lg px-3 py-2 w-full sm:w-64" />
+          </div>
+          <div class="bg-white rounded-2xl border border-neutral-200 overflow-x-auto shadow-sm">
+            <table class="w-full text-sm text-left">
+              <thead class="bg-neutral-50 text-xs uppercase text-neutral-500 border-b border-neutral-200">
+                <tr>
+                  <th class="px-4 py-3">Mã đơn</th>
+                  <th class="px-4 py-3">Khách hàng</th>
+                  <th class="px-4 py-3">Sản phẩm</th>
+                  <th class="px-4 py-3">Tổng tiền</th>
+                  <th class="px-4 py-3">Thanh toán</th>
+                  <th class="px-4 py-3">Trạng thái đơn</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody" class="divide-y divide-neutral-100"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Tab: Products -->
+        <section id="tab-products" class="tab-section hidden space-y-4">
+          <div id="productsAdminList" class="space-y-4"></div>
+        </section>
+
+        <!-- Tab: Reviews -->
+        <section id="tab-reviews" class="tab-section hidden">
+          <div class="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm">
+            <h3 class="font-bold mb-4">Danh sách đánh giá từ khách hàng</h3>
+            <div id="reviewsAdminList" class="space-y-3"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div id="addProductModal" class="fixed inset-0 z-50 hidden bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative">
+      <button onclick="closeAddProductModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full hover:bg-neutral-100">✕</button>
+      <h2 class="text-xl font-bold mb-4">Thêm sản phẩm thời trang mới</h2>
+      <form onsubmit="addNewProduct(event)" class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1">Tên sản phẩm</label>
+          <input id="npName" required placeholder="VD: Áo Len Cổ Lọ Cashmere" class="w-full border border-neutral-300 rounded-lg px-3 py-2" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase mb-1">Danh mục</label>
+            <select id="npCategory" class="w-full border border-neutral-300 rounded-lg px-3 py-2">
+              <option>Áo thun</option><option>Áo khoác</option><option>Quần</option><option>Váy/Đầm</option><option>Phụ kiện</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase mb-1">Giá bán (VNĐ)</label>
+            <input id="npPrice" type="number" required min="10000" step="1000" value="590000" class="w-full border border-neutral-300 rounded-lg px-3 py-2" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1">Link hình ảnh (URL)</label>
+          <input id="npImage" placeholder="https://images.unsplash.com/..." value="https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=800&q=80" class="w-full border border-neutral-300 rounded-lg px-3 py-2" />
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase mb-1">Màu sắc</label>
+            <input id="npColor" required value="Đen" class="w-full border border-neutral-300 rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase mb-1">Size (phẩy)</label>
+            <input id="npSizes" required value="S, M, L" class="w-full border border-neutral-300 rounded-lg px-3 py-2" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase mb-1">Tồn kho/size</label>
+            <input id="npStock" type="number" required min="1" value="15" class="w-full border border-neutral-300 rounded-lg px-3 py-2" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold uppercase mb-1">Mô tả ngắn</label>
+          <textarea id="npDesc" rows="2" class="w-full border border-neutral-300 rounded-lg px-3 py-2">Thiết kế tối giản cao cấp từ bộ sưu tập VOGUE & CO.</textarea>
+        </div>
+        <button type="submit" class="w-full py-3 bg-black text-white font-semibold rounded-xl hover:bg-neutral-800 mt-2">
+          Lưu &amp; Đăng bán ngay
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-[60] bg-black text-white text-sm px-5 py-3 rounded-xl shadow-xl opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+  <script>
+    
+const STORAGE_KEYS = {
+  PRODUCTS: 'vogue_products_v2',
+  ORDERS: 'vogue_orders_v2',
+  REVIEWS: 'vogue_reviews_v2',
+  CART: 'vogue_cart_v2'
+};
+
+const DEFAULT_PRODUCTS = [
+  {
+    id: 'p1',
+    name: 'Áo Thun Oversize Cotton Heavyweight',
+    category: 'Áo thun',
+    price: 390000,
+    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80',
+    desc: 'Chất liệu 100% Cotton 260gsm dày dặn, đứng form, thoáng mát. Thiết kế tối giản chuẩn phong cách đường phố.',
+    variants: [
+      { sku: 'VC-TS-WHT-M', color: 'Trắng', size: 'M', stock: 18 },
+      { sku: 'VC-TS-WHT-L', color: 'Trắng', size: 'L', stock: 12 },
+      { sku: 'VC-TS-BLK-M', color: 'Đen', size: 'M', stock: 15 },
+      { sku: 'VC-TS-BLK-L', color: 'Đen', size: 'L', stock: 6 }
+    ]
+  },
+  {
+    id: 'p2',
+    name: 'Áo Khoác Blazer Dáng Suông Minimal',
+    category: 'Áo khoác',
+    price: 1290000,
+    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80',
+    desc: 'Blazer 2 lớp cao cấp, đệm vai nhẹ tạo phom dáng thanh lịch. Phù hợp đi làm lẫn dạo phố.',
+    variants: [
+      { sku: 'VC-BZ-BLK-S', color: 'Đen', size: 'S', stock: 8 },
+      { sku: 'VC-BZ-BLK-M', color: 'Đen', size: 'M', stock: 10 },
+      { sku: 'VC-BZ-BEI-M', color: 'Be', size: 'M', stock: 5 },
+      { sku: 'VC-BZ-BEI-L', color: 'Be', size: 'L', stock: 3 }
+    ]
+  },
+  {
+    id: 'p3',
+    name: 'Quần Tây Ống Suông Xếp Ly Cao Cấp',
+    category: 'Quần',
+    price: 680000,
+    image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=800&q=80',
+    desc: 'Vải tuyết mưa mềm mịn, ít nhăn, cạp cao tôn dáng. Dễ phối cùng áo sơ mi hoặc áo thun.',
+    variants: [
+      { sku: 'VC-TR-BLK-S', color: 'Đen', size: 'S', stock: 14 },
+      { sku: 'VC-TR-BLK-M', color: 'Đen', size: 'M', stock: 11 },
+      { sku: 'VC-TR-GRY-M', color: 'Xám ghi', size: 'M', stock: 9 },
+      { sku: 'VC-TR-GRY-L', color: 'Xám ghi', size: 'L', stock: 4 }
+    ]
+  },
+  {
+    id: 'p4',
+    name: 'Đầm Midi Lụa Satin Cổ Đổ',
+    category: 'Váy/Đầm',
+    price: 950000,
+    image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?auto=format&fit=crop&w=800&q=80',
+    desc: 'Lụa satin ánh mờ mềm rũ, tôn lên đường nét thanh thoát. Thiết kế tinh tế cho những buổi tiệc tối.',
+    variants: [
+      { sku: 'VC-DR-RED-S', color: 'Đỏ rượu', size: 'S', stock: 7 },
+      { sku: 'VC-DR-RED-M', color: 'Đỏ rượu', size: 'M', stock: 9 },
+      { sku: 'VC-DR-BLK-S', color: 'Đen', size: 'S', stock: 12 },
+      { sku: 'VC-DR-BLK-M', color: 'Đen', size: 'M', stock: 6 }
+    ]
+  },
+  {
+    id: 'p5',
+    name: 'Áo Khoác Trench Coat Kaki Chống Nước',
+    category: 'Áo khoác',
+    price: 1650000,
+    image: 'https://images.unsplash.com/photo-1544022613-e87ca75a784a?auto=format&fit=crop&w=800&q=80',
+    desc: 'Kaki dệt mật độ cao cản gió nhẹ, kèm đai thắt eo cổ điển. Item không thể thiếu cho mùa thu đông.',
+    variants: [
+      { sku: 'VC-TC-KAK-M', color: 'Nâu kaki', size: 'M', stock: 6 },
+      { sku: 'VC-TC-KAK-L', color: 'Nâu kaki', size: 'L', stock: 4 },
+      { sku: 'VC-TC-BLK-M', color: 'Đen', size: 'M', stock: 8 }
+    ]
+  },
+  {
+    id: 'p6',
+    name: 'Quần Jeans Ống Đứng Selvedge Wash',
+    category: 'Quần',
+    price: 790000,
+    image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=800&q=80',
+    desc: 'Denim 13oz bền bỉ, hiệu ứng wash tự nhiên, form đứng cổ điển dễ mặc hằng ngày.',
+    variants: [
+      { sku: 'VC-JN-BLU-M', color: 'Xanh đậm', size: 'M', stock: 16 },
+      { sku: 'VC-JN-BLU-L', color: 'Xanh đậm', size: 'L', stock: 10 },
+      { sku: 'VC-JN-BLK-M', color: 'Đen wash', size: 'M', stock: 9 },
+      { sku: 'VC-JN-BLK-XL', color: 'Đen wash', size: 'XL', stock: 5 }
+    ]
+  },
+  {
+    id: 'p7',
+    name: 'Áo Sơ Mi Lụa Poplin Dáng Rộng',
+    category: 'Áo thun',
+    price: 540000,
+    image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80',
+    desc: 'Vải cotton poplin pha lụa mát nhẹ, bề mặt phẳng mịn, phù hợp cả phong cách công sở và casual.',
+    variants: [
+      { sku: 'VC-SM-WHT-S', color: 'Trắng', size: 'S', stock: 14 },
+      { sku: 'VC-SM-WHT-M', color: 'Trắng', size: 'M', stock: 20 },
+      { sku: 'VC-SM-BLU-M', color: 'Xanh pastel', size: 'M', stock: 11 }
+    ]
+  },
+  {
+    id: 'p8',
+    name: 'Chân Váy Xếp Ly Dài Thời Thượng',
+    category: 'Váy/Đầm',
+    price: 620000,
+    image: 'https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?auto=format&fit=crop&w=800&q=80',
+    desc: 'Nếp ly sắc nét giữ form bền lâu, cạp chun ẩn tinh tế giúp thoải mái di chuyển cả ngày.',
+    variants: [
+      { sku: 'VC-SK-BLK-S', color: 'Đen', size: 'S', stock: 10 },
+      { sku: 'VC-SK-BLK-M', color: 'Đen', size: 'M', stock: 13 },
+      { sku: 'VC-SK-BEI-S', color: 'Kem', size: 'S', stock: 7 }
+    ]
+  },
+  {
+    id: 'p9',
+    name: 'Túi Xách Tote Da Microfiber Tối Giản',
+    category: 'Phụ kiện',
+    price: 890000,
+    image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=80',
+    desc: 'Đựng vừa laptop 14 inch, chất liệu da microfiber chống trầy xước, đường may sắc sảo.',
+    variants: [
+      { sku: 'VC-BG-BLK-OS', color: 'Đen', size: 'Freesize', stock: 15 },
+      { sku: 'VC-BG-BRW-OS', color: 'Nâu da bò', size: 'Freesize', stock: 8 }
+    ]
+  },
+  {
+    id: 'p10',
+    name: 'Kính Mát Gọng Acetate Cổ Điển',
+    category: 'Phụ kiện',
+    price: 490000,
+    image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=800&q=80',
+    desc: 'Tròng kính chống tia UV400, gọng acetate cao cấp nhẹ nhàng, ôm vừa vặn khuôn mặt châu Á.',
+    variants: [
+      { sku: 'VC-GL-BLK-OS', color: 'Đen bóng', size: 'Freesize', stock: 22 },
+      { sku: 'VC-GL-TRT-OS', color: 'Đồi mồi', size: 'Freesize', stock: 2 }
+    ]
+  }
+];
+
+const DEFAULT_ORDERS = [
+  {
+    order_code: 'ORD202611260915',
+    customer_name: 'Nguyễn Minh Anh',
+    phone: '0912345678',
+    address: '24 Phố Huế, Hai Bà Trưng, Hà Nội',
+    payment_method: 'VIETQR',
+    payment_status: 'paid',
+    order_status: 'confirmed',
+    coupon: 'SALE10',
+    discount: 168000,
+    subtotal: 1680000,
+    total_amount: 1512000,
+    created_at: '2026-11-26 09:15:22',
+    items: [
+      { product_id: 'p2', name: 'Áo Khoác Blazer Dáng Suông Minimal', sku: 'VC-BZ-BLK-M', color: 'Đen', size: 'M', price: 1290000, qty: 1 },
+      { product_id: 'p1', name: 'Áo Thun Oversize Cotton Heavyweight', sku: 'VC-TS-WHT-M', color: 'Trắng', size: 'M', price: 390000, qty: 1 }
+    ]
+  },
+  {
+    order_code: 'ORD202611261040',
+    customer_name: 'Trần Hoàng Nam',
+    phone: '0987654321',
+    address: '108 Xuân Thủy, Cầu Giấy, Hà Nội',
+    payment_method: 'COD',
+    payment_status: 'unpaid',
+    order_status: 'pending',
+    coupon: '',
+    discount: 0,
+    subtotal: 790000,
+    total_amount: 790000,
+    created_at: '2026-11-26 10:40:05',
+    items: [
+      { product_id: 'p6', name: 'Quần Jeans Ống Đứng Selvedge Wash', sku: 'VC-JN-BLU-L', color: 'Xanh đậm', size: 'L', price: 790000, qty: 1 }
+    ]
+  }
+];
+
+const DEFAULT_REVIEWS = [
+  { id: 'r1', product_id: 'p1', author: 'Lê Thảo Vy', rating: 5, comment: 'Vải dày dặn, mặc rất đứng form, giao hàng nhanh!', date: '2026-11-24' },
+  { id: 'r2', product_id: 'p2', author: 'Phạm Đức Mạnh', rating: 5, comment: 'Blazer cắt may cực kỳ sắc nét, đáng tiền.', date: '2026-11-25' }
+];
+
+function initStorage() {
+  if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) {
+    localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.ORDERS)) {
+    localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(DEFAULT_ORDERS));
+  }
+  if (!localStorage.getItem(STORAGE_KEYS.REVIEWS)) {
+    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(DEFAULT_REVIEWS));
+  }
+}
+
+function getProducts() {
+  initStorage();
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.PRODUCTS) || '[]');
+}
+function saveProducts(data) {
+  localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(data));
+}
+function getOrders() {
+  initStorage();
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
+}
+function saveOrders(data) {
+  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(data));
+}
+function getReviews() {
+  initStorage();
+  return JSON.parse(localStorage.getItem(STORAGE_KEYS.REVIEWS) || '[]');
+}
+function saveReviews(data) {
+  localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(data));
+}
+function formatVND(n) {
+  return Number(n || 0).toLocaleString('vi-VN') + '₫';
+}
+
+
+    let currentTab = 'dashboard';
+    let orderStatusFilter = 'all';
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('opacity-0');
+      setTimeout(() => t.classList.add('opacity-0'), 2400);
+    }
+
+    function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('admUser').value.trim();
+      const p = document.getElementById('admPass').value.trim();
+      if (u === 'admin' && p === '123456') {
+        sessionStorage.setItem('vogue_admin_auth', '1');
+        showAdminApp();
+      } else {
+        document.getElementById('loginErr').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('vogue_admin_auth');
+      document.getElementById('adminApp').classList.add('hidden');
+      document.getElementById('loginScreen').classList.remove('hidden');
+    }
+
+    function showAdminApp() {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('adminApp').classList.remove('hidden');
+      switchTab(currentTab);
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.querySelectorAll('.tab-section').forEach(s => s.classList.add('hidden'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(b => {
+        b.classList.remove('bg-white', 'text-black', 'font-semibold');
+        b.classList.add('text-neutral-300', 'hover:bg-neutral-800');
+      });
+      const activeBtn = document.getElementById('nav-' + tab);
+      activeBtn.classList.add('bg-white', 'text-black', 'font-semibold');
+      activeBtn.classList.remove('text-neutral-300', 'hover:bg-neutral-800');
+
+      const titles = {
+        dashboard: 'Tổng quan & Báo cáo Doanh thu',
+        orders: 'Quản lý Đơn hàng & Thanh toán',
+        products: 'Quản lý Sản phẩm & Tồn kho SKU',
+        reviews: 'Quản lý Đánh giá Khách hàng'
+      };
+      document.getElementById('pageTitle').textContent = titles[tab];
+      renderAll();
+    }
+
+    function renderAll() {
+      renderDashboard();
+      renderOrdersTable();
+      renderProductsAdmin();
+      renderReviewsAdmin();
+    }
+
+    function renderDashboard() {
+      const orders = getOrders();
+      const products = getProducts();
+
+      const paidRevenue = orders.filter(o => o.payment_status === 'paid' && o.order_status !== 'cancelled').reduce((s, o) => s + o.total_amount, 0);
+      const pendingOrders = orders.filter(o => o.order_status === 'pending').length;
+      const totalVariants = products.reduce((s, p) => s + p.variants.length, 0);
+      const totalStock = products.reduce((s, p) => s + p.variants.reduce((sv, v) => sv + Number(v.stock), 0), 0);
+
+      document.getElementById('kpiCards').innerHTML = `
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+          <div class="text-xs uppercase text-neutral-500 font-semibold">Doanh thu đã thu</div>
+          <div class="text-2xl font-bold accent-red mt-2">${formatVND(paidRevenue)}</div>
+          <div class="text-xs text-green-600 mt-1">Từ đơn đã xác nhận thanh toán</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+          <div class="text-xs uppercase text-neutral-500 font-semibold">Tổng số đơn hàng</div>
+          <div class="text-2xl font-bold mt-2">${orders.length}</div>
+          <div class="text-xs text-amber-600 mt-1">${pendingOrders} đơn đang chờ xử lý</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+          <div class="text-xs uppercase text-neutral-500 font-semibold">Sản phẩm / Biến thể</div>
+          <div class="text-2xl font-bold mt-2">${products.length} <span class="text-sm font-normal text-neutral-400">/ ${totalVariants} SKU</span></div>
+          <div class="text-xs text-neutral-500 mt-1">Đang hiển thị trên web</div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm">
+          <div class="text-xs uppercase text-neutral-500 font-semibold">Tổng tồn kho</div>
+          <div class="text-2xl font-bold mt-2">${totalStock}</div>
+          <div class="text-xs text-neutral-500 mt-1">Sản phẩm sẵn sàng giao</div>
+        </div>
+      `;
+
+      // Recent orders
+      document.getElementById('recentOrders').innerHTML = orders.slice(0, 5).map(o => `
+        <div class="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0">
+          <div>
+            <div class="font-mono font-semibold text-xs">${o.order_code}</div>
+            <div class="text-xs text-neutral-500">${o.customer_name} • ${o.created_at}</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold accent-red">${formatVND(o.total_amount)}</div>
+            <div class="text-[11px] ${o.payment_status === 'paid' ? 'text-green-600' : 'text-amber-600'}">${o.payment_status === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}</div>
+          </div>
+        </div>
+      `).join('') || '<p class="text-neutral-400">Chưa có đơn hàng.</p>';
+
+      // Low stock
+      const lowItems = [];
+      products.forEach(p => p.variants.forEach(v => {
+        if (v.stock <= 5) lowItems.push({ name: p.name, ...v });
+      }));
+      document.getElementById('lowStockList').innerHTML = lowItems.length ? lowItems.map(i => `
+        <div class="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0">
+          <div>
+            <div class="font-medium text-xs">${i.name}</div>
+            <div class="text-[11px] text-neutral-500 font-mono">${i.sku} (${i.color} / ${i.size})</div>
+          </div>
+          <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">Còn ${i.stock}</span>
+        </div>
+      `).join('') : '<p class="text-green-600 text-xs">Tất cả biến thể đều còn đủ tồn kho!</p>';
+    }
+
+    function renderOrdersTable() {
+      const filters = [
+        ['all', 'Tất cả'], ['pending', 'Chờ xác nhận'], ['confirmed', 'Đã xác nhận'],
+        ['shipping', 'Đang giao'], ['delivered', 'Hoàn thành'], ['cancelled', 'Đã hủy']
+      ];
+      document.getElementById('orderFilterBtns').innerHTML = filters.map(([k, lbl]) => `
+        <button onclick="orderStatusFilter='${k}'; renderOrdersTable();"
+          class="px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderStatusFilter === k ? 'bg-black text-white' : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'}">${lbl}</button>
+      `).join('');
+
+      const q = (document.getElementById('orderSearch')?.value || '').trim().toLowerCase();
+      let orders = getOrders().filter(o => {
+        const matchSt = orderStatusFilter === 'all' || o.order_status === orderStatusFilter;
+        const matchQ = !q || o.order_code.toLowerCase().includes(q) || o.customer_name.toLowerCase().includes(q);
+        return matchSt && matchQ;
+      });
+
+      const tbody = document.getElementById('ordersTableBody');
+      if (!orders.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-10 text-neutral-400">Không có đơn hàng nào.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = orders.map(o => `
+        <tr class="hover:bg-neutral-50">
+          <td class="px-4 py-3">
+            <div class="font-mono font-bold text-xs">${o.order_code}</div>
+            <div class="text-[11px] text-neutral-400">${o.created_at}</div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="font-medium">${o.customer_name}</div>
+            <div class="text-xs text-neutral-500">${o.phone}</div>
+            <div class="text-[11px] text-neutral-400 max-w-[180px] truncate" title="${o.address}">${o.address}</div>
+          </td>
+          <td class="px-4 py-3 text-xs space-y-1">
+            ${o.items.map(i => `<div>${i.name} <span class="text-neutral-400">(${i.color}/${i.size} x${i.qty})</span></div>`).join('')}
+          </td>
+          <td class="px-4 py-3 font-bold accent-red">${formatVND(o.total_amount)}</td>
+          <td class="px-4 py-3">
+            <select onchange="updateOrderField('${o.order_code}', 'payment_status', this.value)"
+              class="text-xs border rounded-lg px-2 py-1.5 font-medium ${o.payment_status === 'paid' ? 'bg-green-50 border-green-300 text-green-700' : 'bg-amber-50 border-amber-300 text-amber-700'}">
+              <option value="unpaid" ${o.payment_status === 'unpaid' ? 'selected' : ''}>Chưa thanh toán</option>
+              <option value="paid" ${o.payment_status === 'paid' ? 'selected' : ''}>Đã thanh toán</option>
+            </select>
+            <div class="text-[10px] text-neutral-400 mt-1">${o.payment_method}</div>
+          </td>
+          <td class="px-4 py-3">
+            <select onchange="updateOrderField('${o.order_code}', 'order_status', this.value)"
+              class="text-xs border border-neutral-300 rounded-lg px-2 py-1.5 bg-white">
+              <option value="pending" ${o.order_status === 'pending' ? 'selected' : ''}>Chờ xác nhận</option>
+              <option value="confirmed" ${o.order_status === 'confirmed' ? 'selected' : ''}>Đã xác nhận</option>
+              <option value="shipping" ${o.order_status === 'shipping' ? 'selected' : ''}>Đang giao hàng</option>
+              <option value="delivered" ${o.order_status === 'delivered' ? 'selected' : ''}>Hoàn thành</option>
+              <option value="cancelled" ${o.order_status === 'cancelled' ? 'selected' : ''}>Đã hủy</option>
+            </select>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateOrderField(orderCode, field, value) {
+      const orders = getOrders();
+      const ord = orders.find(o => o.order_code === orderCode);
+      if (ord) {
+        ord[field] = value;
+        saveOrders(orders);
+        renderAll();
+        showToast(`Đã cập nhật đơn ${orderCode}!`);
+      }
+    }
+
+    function renderProductsAdmin() {
+      const products = getProducts();
+      document.getElementById('productsAdminList').innerHTML = products.map(p => `
+        <div class="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
+          <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-neutral-100">
+            <div class="flex gap-4">
+              <img src="${p.image}" class="w-16 h-20 object-cover rounded-lg bg-neutral-100" />
+              <div>
+                <span class="text-[11px] uppercase tracking-wider text-neutral-500">${p.category}</span>
+                <h3 class="font-bold text-base">${p.name}</h3>
+                <div class="font-bold accent-red text-sm mt-1">${formatVND(p.price)}</div>
+              </div>
+            </div>
+            <button onclick="deleteProduct('${p.id}')" class="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50">Xóa sản phẩm</button>
+          </div>
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            ${p.variants.map(v => `
+              <div class="p-3 rounded-xl bg-neutral-50 border border-neutral-200 flex items-center justify-between gap-2 text-xs">
+                <div>
+                  <div class="font-mono font-bold">${v.sku}</div>
+                  <div class="text-neutral-500">${v.color} / Size ${v.size}</div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button onclick="adjustStock('${p.id}', '${v.sku}', -1)" class="w-6 h-6 rounded bg-white border border-neutral-300 hover:bg-neutral-200">-</button>
+                  <span class="w-8 text-center font-bold ${v.stock <= 5 ? 'text-red-600' : 'text-black'}">${v.stock}</span>
+                  <button onclick="adjustStock('${p.id}', '${v.sku}', 1)" class="w-6 h-6 rounded bg-white border border-neutral-300 hover:bg-neutral-200">+</button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function adjustStock(productId, sku, delta) {
+      const products = getProducts();
+      const p = products.find(x => x.id === productId);
+      const v = p?.variants.find(x => x.sku === sku);
+      if (v) {
+        v.stock = Math.max(0, Number(v.stock) + delta);
+        saveProducts(products);
+        renderAll();
+      }
+    }
+
+    function deleteProduct(productId) {
+      if (!confirm('Xóa sản phẩm này khỏi hệ thống?')) return;
+      const products = getProducts().filter(p => p.id !== productId);
+      saveProducts(products);
+      renderAll();
+      showToast('Đã xóa sản phẩm!');
+    }
+
+    function openAddProductModal() { document.getElementById('addProductModal').classList.remove('hidden'); }
+    function closeAddProductModal() { document.getElementById('addProductModal').classList.add('hidden'); }
+
+    function addNewProduct(e) {
+      e.preventDefault();
+      const name = document.getElementById('npName').value.trim();
+      const category = document.getElementById('npCategory').value;
+      const price = Number(document.getElementById('npPrice').value);
+      const image = document.getElementById('npImage').value.trim() || 'https://placehold.co/600x800/f3f4f6/111?text=VOGUE';
+      const color = document.getElementById('npColor').value.trim();
+      const sizes = document.getElementById('npSizes').value.split(',').map(s => s.trim()).filter(Boolean);
+      const stock = Number(document.getElementById('npStock').value);
+      const desc = document.getElementById('npDesc').value.trim();
+
+      const id = 'p' + Date.now();
+      const prefix = 'VC-' + Math.random().toString(36).substring(2, 5).toUpperCase();
+      const variants = sizes.map(sz => ({
+        sku: `${prefix}-${sz.toUpperCase()}`,
+        color,
+        size: sz,
+        stock
+      }));
+
+      const products = getProducts();
+      products.unshift({ id, name, category, price, image, desc, variants });
+      saveProducts(products);
+      closeAddProductModal();
+      renderAll();
+      showToast('Đã thêm sản phẩm mới lên trang khách hàng!');
+    }
+
+    function renderReviewsAdmin() {
+      const reviews = getReviews();
+      const products = getProducts();
+      document.getElementById('reviewsAdminList').innerHTML = reviews.length ? reviews.map(r => {
+        const p = products.find(x => x.id === r.product_id);
+        return `
+          <div class="flex items-start justify-between gap-4 p-4 rounded-xl bg-neutral-50 border border-neutral-200 text-sm">
+            <div>
+              <div class="font-semibold">${r.author} <span class="text-amber-500 ml-2">${'★'.repeat(r.rating)}</span> <span class="text-xs text-neutral-400 font-normal ml-2">${r.date}</span></div>
+              <div class="text-xs text-neutral-500 mt-0.5">Sản phẩm: <strong>${p ? p.name : r.product_id}</strong></div>
+              <p class="mt-1.5 text-neutral-700">${r.comment}</p>
+            </div>
+            <button onclick="deleteReview('${r.id}')" class="text-xs text-red-600 hover:underline shrink-0">Xóa</button>
+          </div>
+        `;
+      }).join('') : '<p class="text-sm text-neutral-400">Chưa có đánh giá nào.</p>';
+    }
+
+    function deleteReview(id) {
+      saveReviews(getReviews().filter(r => r.id !== id));
+      renderReviewsAdmin();
+      showToast('Đã xóa đánh giá.');
+    }
+
+    function resetDemoData() {
+      if (!confirm('Khôi phục toàn bộ sản phẩm, đơn hàng và đánh giá về dữ liệu mẫu ban đầu?')) return;
+      localStorage.setItem(STORAGE_KEYS.PRODUCTS, JSON.stringify(DEFAULT_PRODUCTS));
+      localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(DEFAULT_ORDERS));
+      localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(DEFAULT_REVIEWS));
+      renderAll();
+      showToast('Đã khôi phục dữ liệu mẫu!');
+    }
+
+    // Live sync across tabs (when customer places an order in index.html)
+    window.addEventListener('storage', () => renderAll());
+
+    // Init
+    initStorage();
+    if (sessionStorage.getItem('vogue_admin_auth') === '1') {
+      showAdminApp();
+    }
+  </script>
+</body>
+</html>
